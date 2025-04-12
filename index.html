@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preguntas Repaso</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      line-height: 1.6;
+    }
+    .question { 
+      margin-bottom: 20px; 
+      padding: 15px; 
+      border: 1px solid #ccc; 
+      border-radius: 8px;
+    }
+    .options button { 
+      margin: 5px 0; 
+      display: block; 
+      width: 100%; 
+      padding: 10px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      transition: background-color 0.3s;
+    }
+    .correct { background-color: #c8e6c9; }
+    .incorrect { background-color: #ffcdd2; }
+    .explanation { 
+      margin-top: 10px; 
+      font-style: italic;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Preguntas Repaso</h1>
+  </header>
+  
+  <!-- Contenedor donde se renderizarán todas las preguntas -->
+  <div id="quiz"></div>
+  
+  <script>
+    // Función para mezclar un arreglo (algoritmo Fisher-Yates)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+    
+    /* 
+      Se tienen dos conjuntos de preguntas:
+      1. Preguntas extraídas del archivo "preguntas respy cir.txt" (originalmente 
+         destinadas al test de Cardiopulmonar y Normativa).
+      2. Preguntas extraídas del archivo "neoplasias.txt".
+      
+      En este ejemplo, he corregido la sintaxis del arreglo de preguntas del archivo "neoplasias.txt";
+      allí se presentan 15 preguntas. Por otro lado, el archivo "preguntas respy cir.txt" (no se muestra íntegramente aquí)
+      aportaría, según el encabezado, aproximadamente 34 preguntas.
+      
+      Finalmente, se añaden 2 nuevas preguntas sobre oncología/codificación, quedando la fusión total con más de 50 preguntas.
+      
+      Para fusionar todos los conjuntos, usaremos el método .concat().
+    */
+    
+    // Arreglo extraído (y corregido) del archivo "neoplasias.txt"
+    const preguntasNeoplasias = [
+      {
+        texto: "¿Cuál es el síntoma más característico de la insuficiencia cardiaca izquierda?",
+        opciones: ["Disnea de esfuerzo", "Edema en miembros inferiores", "Hepatomegalia", "Ingurgitación yugular"],
+        correcta: 0,
+        explicacion: "La disnea progresiva es el síntoma más frecuente por congestión pulmonar."
+      },
+      {
+        texto: "¿Qué hallazgo clínico es típico en un paciente con EPOC?",
+        opciones: ["Ausencia de ruidos respiratorios", "Hipersonoridad a la percusión", "Crepitantes bibasales", "Soplo sistólico"],
+        correcta: 1,
+        explicacion: "La hipersonoridad se debe a atrapamiento aéreo y aumento del volumen residual pulmonar."
+      },
+      {
+        texto: "¿Qué situación provoca un aumento de la presión venosa yugular?",
+        opciones: ["Insuficiencia aórtica", "Insuficiencia tricuspídea", "Estenosis mitral", "Neumonía"],
+        correcta: 1,
+        explicacion: "La insuficiencia tricuspídea provoca reflujo de sangre hacia las yugulares."
+      },
+      {
+        texto: "¿Cuál de las siguientes características es propia de una neoplasia benigna?",
+        opciones: ["Capacidad de invadir tejidos a distancia", "Producción de metástasis por vía hemática", "Crecimiento localizado que puede comprimir estructuras adyacentes", "Incertidumbre en su comportamiento clínico"],
+        correcta: 2,
+        explicacion: "Las neoplasias benignas crecen localmente sin invadir otros tejidos ni producir metástasis, aunque pueden comprimir estructuras vecinas."
+      },
+      {
+        texto: "¿Qué comportamiento tiene un carcinoma in situ?",
+        opciones: ["Invade tejidos vecinos", "Permanece limitado al epitelio sin invadir la membrana basal", "Provoca metástasis linfática", "Siempre es de grado IV"],
+        correcta: 1,
+        explicacion: "El carcinoma in situ permanece limitado al epitelio sin invadir la membrana basal ni producir metástasis."
+      },
+      {
+        texto: "¿Cuál es la vía menos frecuente de diseminación de una neoplasia maligna?",
+        opciones: ["Por sangre (hemática)", "Por linfa", "Por implantación en cavidades serosas", "Por vía aérea"],
+        correcta: 3,
+        explicacion: "La diseminación por vía aérea es extremadamente rara en las neoplasias malignas."
+      },
+      {
+        texto: "¿Cómo se clasifica una neoplasia de comportamiento incierto?",
+        opciones: ["Benigna", "Maligna con metástasis confirmada", "De morfología conocida pero con comportamiento clínico impredecible", "Siempre secundaria"],
+        correcta: 2,
+        explicacion: "Las neoplasias de comportamiento incierto tienen diagnóstico morfológico conocido pero evolución clínica impredecible."
+      },
+      {
+        texto: "¿Qué factor diferencia una metástasis de un tumor primario?",
+        opciones: ["Su localización", "Su morfología", "Su comportamiento benigno", "Su capacidad de invadir tejidos locales"],
+        correcta: 0,
+        explicacion: "La localización distingue a una metástasis, ya que su morfología es igual a la del tumor primario pero se encuentra en otro lugar."
+      },
+      {
+        texto: "¿Cuál es la principal causa de anemia en pacientes con cáncer?",
+        opciones: ["Déficit de hierro", "Anemia por enfermedad crónica", "Pérdida hemática aguda", "Deficiencia de vitamina B12"],
+        correcta: 1,
+        explicacion: "En pacientes oncológicos la anemia suele deberse a enfermedad crónica por inflamación y supresión medular."
+      },
+      {
+        texto: "¿Qué indicación clínica es prioritaria cuando se detecta un ganglio linfático supraclavicular izquierdo aumentado?",
+        opciones: ["Descartar tuberculosis", "Descartar metástasis abdominal", "Evaluar infección viral", "Realizar ecografía tiroidea"],
+        correcta: 1,
+        explicacion: "Un ganglio supraclavicular izquierdo aumentado sugiere metástasis de tumores abdominales, especialmente gástricos."
+      },
+      {
+        texto: "¿Qué diferencia un tumor bien diferenciado de uno indiferenciado?",
+        opciones: ["La capacidad de metastatizar", "El grado de semejanza morfológica con el tejido de origen", "La edad del paciente", "El tipo de tratamiento necesario"],
+        correcta: 1,
+        explicacion: "La diferenciación hace referencia al parecido del tumor con el tejido normal; cuanto más parecido, mejor diferenciado."
+      },
+      {
+        texto: "¿Cuál de estos tumores malignos presenta mayor tendencia a metastatizar por vía linfática?",
+        opciones: ["Carcinoma", "Sarcoma", "Melanoma", "Glioma"],
+        correcta: 0,
+        explicacion: "Los carcinomas tienden a diseminarse por vía linfática, mientras que los sarcomas lo hacen más por vía hemática."
+      },
+      {
+        texto: "¿Qué parámetro es más útil para valorar la agresividad de una neoplasia?",
+        opciones: ["El tamaño del tumor", "El grado histológico de diferenciación", "La localización del tumor", "La edad del paciente"],
+        correcta: 1,
+        explicacion: "El grado de diferenciación histológica permite estimar la agresividad y potencial de crecimiento tumoral."
+      },
+      {
+        texto: "¿Qué hallazgo sugiere malignidad en una biopsia de ganglio linfático?",
+        opciones: ["Hiperplasia reactiva", "Presencia de células grandes, pleomórficas y mitosis atípicas", "Predominio linfocitario", "Ausencia de células inflamatorias"],
+        correcta: 1,
+        explicacion: "La presencia de células grandes, pleomórficas y mitosis atípicas es típica de malignidad en ganglios."
+      },
+      {
+        texto: "¿Qué órgano suele ser el sitio más frecuente de metástasis por vía hemática?",
+        opciones: ["Hígado", "Piel", "Corazón", "Hueso temporal"],
+        correcta: 0,
+        explicacion: "El hígado es muy vascularizado y recibe metástasis por vía hemática, especialmente de tumores digestivos."
+      },
+      {
+        texto: "¿Qué término describe una neoplasia maligna de tejido conjuntivo?",
+        opciones: ["Carcinoma", "Sarcoma", "Adenoma", "Linfoma"],
+        correcta: 1,
+        explicacion: "Un sarcoma es una neoplasia maligna derivada de tejidos conjuntivos como hueso, músculo o grasa."
+      },
+      {
+        texto: "¿Cuál de estas neoplasias tiene mayor probabilidad de asociarse a paraneoplasias endocrinas?",
+        opciones: ["Carcinoma de pulmón de células pequeñas", "Carcinoma escamoso de piel", "Glioma", "Fibroma uterino"],
+        correcta: 0,
+        explicacion: "El carcinoma de pulmón de células pequeñas puede producir hormonas ectópicas y síndromes paraneoplásicos."
+      },
+      {
+        texto: "¿Qué tipo de necrosis es característica en la mayoría de tumores malignos?",
+        opciones: ["Licuefactiva", "Caseosa", "Isquémica (coagulativa)", "Grasa"],
+        correcta: 2,
+        explicacion: "La necrosis coagulativa es típica en tumores malignos debido a su rápido crecimiento que supera el aporte vascular."
+      },
+      {
+        texto: "¿Qué factor pronóstico se considera más relevante en los tumores malignos?",
+        opciones: ["Grado histológico", "Edad del paciente", "Síntomas generales", "Grupo sanguíneo"],
+        correcta: 0,
+        explicacion: "El grado histológico, que refleja la diferenciación y actividad mitótica, es uno de los factores pronósticos más importantes."
+      },
+      {
+        texto: "¿Qué característica histológica diferencia mejor a una neoplasia benigna de una maligna?",
+        opciones: ["Presencia de cápsula", "Inflamación", "Fibrosis", "Hemorragia"],
+        correcta: 0,
+        explicacion: "Las neoplasias benignas suelen presentar cápsula que las delimita, mientras que las malignas no."
+      },
+      {
+        texto: "¿Cuál de estas neoplasias malignas suele diseminarse primero por vía hemática?",
+        opciones: ["Carcinoma", "Sarcoma", "Carcinoma in situ", "Papiloma"],
+        correcta: 1,
+        explicacion: "Los sarcomas tienen mayor tendencia a la diseminación hematógena respecto a los carcinomas."
+      },
+      {
+        texto: "¿Qué significa el término metástasis?",
+        opciones: ["Crecimiento local", "Diseminación a distancia desde un tumor primario", "Neoplasia benigna", "Inflamación reactiva"],
+        correcta: 1,
+        explicacion: "La metástasis es la propagación de células tumorales desde un tumor primario a otros órganos o tejidos."
+      },
+      {
+        texto: "¿Cuál es el principal efecto adverso hematológico de la quimioterapia?",
+        opciones: ["Anemia", "Pancitopenia", "Leucocitosis", "Trombocitosis"],
+        correcta: 1,
+        explicacion: "La pancitopenia es el descenso de todas las líneas celulares de la sangre, muy frecuente con quimioterapia."
+      }
+    ];
+    
+    // Nuevas preguntas para agregar:
+    const nuevasPreguntas = [
+      {
+        texto: "Paciente con historia de cáncer de colon tratado hace 3 años (Z85.0 — Antecedente personal de neoplasia maligna de tracto digestivo) que ingresa por metástasis hepáticas (C78.7 — Metástasis hepática). Según CIE-10-ES, ¿cuál debe ser el diagnóstico principal?",
+        opciones: [
+          "Z85.0 — Antecedente personal de neoplasia maligna de tracto digestivo",
+          "C78.7 — Metástasis hepática",
+          "C18.9 — Neoplasia maligna de colon, no especificada",
+          "Z08.0 — Seguimiento posterior a tratamiento antineoplásico"
+        ],
+        correcta: 1,
+        explicacion: "Aunque existe un antecedente, la normativa CIE-10-ES dicta que se codifica como principal la manifestación activa (metástasis hepática) y se registra como secundaria la neoplasia previa o su antecedente."
+      },
+      {
+        texto: "Paciente ingresado para quimioterapia antineoplásica por carcinoma ductal infiltrante de mama (C50.9 — Neoplasia maligna de mama, no especificada). ¿Qué diagnóstico principal se debe asignar según la normativa de codificación CIE-10-ES?",
+        opciones: [
+          "C50.9 — Neoplasia maligna de mama, no especificada",
+          "Z51.1 — Quimioterapia antineoplásica",
+          "Z08.1 — Seguimiento de tratamiento antineoplásico de mama",
+          "Z85.3 — Antecedente personal de neoplasia maligna de mama"
+        ],
+        correcta: 1,
+        explicacion: "Según CIE-10-ES, en ingresos programados para tratamiento (quimioterapia) se codifica como principal el código Z51.1, seguido del diagnóstico oncológico activo."
+      }
+    ];
+    
+    // Unificamos todos los arreglos: al concatenar preguntasNeoplasias y nuevasPreguntas
+    const preguntasUnificadas = preguntasNeoplasias.concat(nuevasPreguntas);
+    
+    // Mezclamos el arreglo unificado.
+    shuffleArray(preguntasUnificadas);
+    
+    // Para cada pregunta, mezclamos las opciones y actualizamos el índice de la respuesta correcta
+    preguntasUnificadas.forEach(function(pregunta) {
+      const opcionesConFlag = pregunta.opciones.map((opcion, index) => ({
+        texto: opcion,
+        isCorrect: (index === pregunta.correcta)
+      }));
+      shuffleArray(opcionesConFlag);
+      pregunta.opciones = opcionesConFlag.map(item => item.texto);
+      pregunta.correcta = opcionesConFlag.findIndex(item => item.isCorrect);
+    });
+    
+    // Renderizamos las preguntas en el contenedor con id="quiz"
+    const quizContainer = document.getElementById("quiz");
+    preguntasUnificadas.forEach((pregunta, index) => {
+      const contenedor = document.createElement("div");
+      contenedor.className = "question";
+      
+      const enunciado = document.createElement("h3");
+      enunciado.textContent = `Pregunta ${index + 1}: ${pregunta.texto}`;
+      contenedor.appendChild(enunciado);
+      
+      const opcionesDiv = document.createElement("div");
+      opcionesDiv.className = "options";
+      
+      pregunta.opciones.forEach((opcion, i) => {
+        const boton = document.createElement("button");
+        boton.textContent = opcion;
+        boton.onclick = () => {
+          if (i === pregunta.correcta) {
+            boton.classList.add("correct");
+            mostrarExplicacion(contenedor, `✅ Correcto. ${pregunta.explicacion}`);
+          } else {
+            boton.classList.add("incorrect");
+            mostrarExplicacion(contenedor, `❌ Incorrecto. La respuesta correcta es: "${pregunta.opciones[pregunta.correcta]}". ${pregunta.explicacion}`);
+          }
+          desactivarBotones(opcionesDiv);
+        };
+        opcionesDiv.appendChild(boton);
+      });
+      
+      contenedor.appendChild(opcionesDiv);
+      quizContainer.appendChild(contenedor);
+    });
+    
+    function desactivarBotones(div) {
+      const botones = div.querySelectorAll("button");
+      botones.forEach(boton => boton.disabled = true);
+    }
+    
+    function mostrarExplicacion(contenedor, texto) {
+      const exp = document.createElement("div");
+      exp.className = "explanation";
+      exp.innerHTML = texto;
+      contenedor.appendChild(exp);
+    }
+  </script>
+</body>
+</html>
